@@ -1,0 +1,50 @@
+---
+- name: Linux administration and hardening
+  hosts: linux
+  become: true
+  tasks:
+
+    - name: Create helpdesk user
+      user:
+        name: helpdesk
+        comment: Helpdesk local account
+        shell: /bin/bash
+        state: present
+
+    - name: Create custom MOTD file
+      copy:
+        dest: /etc/motd
+        content: |
+          Authorized access only.
+          Managed by Ansible for AI with DevOps assignment.
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Disable root SSH login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin no'
+        backup: yes
+      notify: restart ssh
+
+    - name: Set PASS_MAX_DAYS
+      lineinfile:
+        path: /etc/login.defs
+        regexp: '^PASS_MAX_DAYS'
+        line: 'PASS_MAX_DAYS 90'
+        backup: yes
+
+    - name: Set PASS_MIN_DAYS
+      lineinfile:
+        path: /etc/login.defs
+        regexp: '^PASS_MIN_DAYS'
+        line: 'PASS_MIN_DAYS 7'
+        backup: yes
+
+  handlers:
+    - name: restart ssh
+      service:
+        name: sshd
+        state: restarted
